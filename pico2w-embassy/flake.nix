@@ -14,15 +14,7 @@
           };
         in
         {
-          # packages.default = derivation {
-          #   name="test";
-          #   inherit system;
-          #   builder = "${pkgs.bash}/bin/bash";
-          #   args = ["-c" "echo ${builtins.concatStringsSep " " (builtins.attrNames pkgs.rust-bin)} > $out"];
-          # };
-
           devShells.default = pkgs.mkShell {
-            # buildInputs = with pkgs; [(rust-bin.stable.latest.default)];
             buildInputs = with pkgs; [
               (rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
               elf2uf2-rs

@@ -5,8 +5,6 @@
 #![no_std]
 #![no_main]
 
-use core::sync::atomic::{self, AtomicU32};
-
 use cyw43::JoinOptions;
 use cyw43_pio::{DEFAULT_CLOCK_DIVIDER, PioSpi};
 use defmt::*;
@@ -15,7 +13,7 @@ use embassy_net::StackResources;
 use embassy_net::tcp::TcpSocket;
 use embassy_rp::bind_interrupts;
 use embassy_rp::clocks::RoscRng;
-use embassy_rp::gpio::{AnyPin, Input, Level, Output, Pull};
+use embassy_rp::gpio::{Level, Output};
 use embassy_rp::interrupt::typelevel::Interrupt;
 use embassy_rp::peripherals::{DMA_CH0, PIO0};
 use embassy_rp::pio::{self, Pio};
@@ -52,26 +50,9 @@ async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'sta
     runner.run().await
 }
 
-static COUNTER: AtomicU32 = AtomicU32::new(0);
-
-#[embassy_executor::task]
-async fn check_for_button_press(button_pin: AnyPin) {
-    let mut input = Input::new(button_pin, Pull::Up);
-    loop {
-        input.wait_for_low().await;
-        Timer::after_millis(100).await;
-        input.wait_for_high().await;
-        COUNTER.fetch_add(1, atomic::Ordering::Relaxed);
-    }
-}
-
 #[embassy_executor::main]
 async fn main(spawner: Spawner) {
     let p = embassy_rp::init(Default::default());
-
-    spawner
-        .spawn(check_for_button_press(p.PIN_15.into()))
-        .unwrap();
 
     let fw = include_bytes!("../cyw43-firmware/43439A0.bin");
     let clm = include_bytes!("../cyw43-firmware/43439A0_clm.bin");
